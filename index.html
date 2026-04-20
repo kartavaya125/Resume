@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kartavaya Suryavanshi | Developer Portfolio</title>
+  <meta name="description" content="Personal resume and portfolio of Kartavaya Suryavanshi — a passionate developer crafting futuristic digital experiences." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React & Babel (CDN) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="root"></div>
+  <canvas id="particleCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:0;"></canvas>
+
+  <!-- React App via Babel -->
+  <script type="text/babel" src="script.js"></script>
+
+  <!-- Vanilla JS: Particles + Scroll Effects -->
+  <script>
+    /* ── PARTICLES ── */
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+    resize(); addEventListener('resize', resize);
+
+    const mouse = { x: null, y: null };
+    addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+    class P {
+      constructor() { this.r(); }
+      r() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = (Math.random() - 0.5) * 0.4;
+        this.rad = Math.random() * 1.5 + 0.5;
+        this.a = Math.random() * 0.4 + 0.1;
+        this.c = Math.random() > 0.5 ? '#3b82f6' : '#06b6d4';
+      }
+      update() {
+        this.x += this.vx; this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        if (mouse.x) {
+          const dx = this.x - mouse.x, dy = this.y - mouse.y;
+          const d = Math.sqrt(dx*dx + dy*dy);
+          if (d < 100) { this.x += dx/d*1.5; this.y += dy/d*1.5; }
+        }
+      }
+      draw() {
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.rad, 0, Math.PI*2);
+        ctx.fillStyle = this.c; ctx.globalAlpha = this.a; ctx.fill(); ctx.globalAlpha = 1;
+      }
+    }
+
+    const pts = Array.from({ length: 75 }, () => new P());
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pts.forEach(p => { p.update(); p.draw(); });
+      for (let i = 0; i < pts.length; i++)
+        for (let j = i+1; j < pts.length; j++) {
+          const dx = pts[i].x-pts[j].x, dy = pts[i].y-pts[j].y;
+          const d = Math.sqrt(dx*dx+dy*dy);
+          if (d < 120) {
+            ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y);
+            ctx.strokeStyle = '#3b82f6'; ctx.globalAlpha = (1-d/120)*0.12;
+            ctx.lineWidth = 0.5; ctx.stroke(); ctx.globalAlpha = 1;
+          }
+        }
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    /* ── SCROLL REVEAL ── */
+    function initReveal() {
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); obs.unobserve(e.target); } });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => obs.observe(el));
+    }
+    setTimeout(initReveal, 600);
+    setTimeout(initReveal, 1800);
+
+    /* ── SKILL BARS ── */
+    const skillObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting)
+          document.querySelectorAll('.skill-bar-fill').forEach(b => b.style.width = b.dataset.width + '%');
+      });
+    }, { threshold: 0.3 });
+    setTimeout(() => { const s = document.getElementById('skills'); if (s) skillObs.observe(s); }, 800);
+
+    /* ── ACTIVE NAV ── */
+    addEventListener('scroll', () => {
+      let cur = '';
+      document.querySelectorAll('section[id]').forEach(s => {
+        if (scrollY >= s.offsetTop - 120) cur = s.id;
+      });
+      document.querySelectorAll('.nav-link').forEach(l => {
+        l.classList.toggle('active-nav', l.getAttribute('href') === '#' + cur);
+      });
+    });
+
+    /* ── SMOOTH SCROLL ── */
+    document.addEventListener('click', e => {
+      const a = e.target.closest('a[href^="#"]');
+      if (a) { e.preventDefault(); const t = document.querySelector(a.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  </script>
+</body>
+</html>
